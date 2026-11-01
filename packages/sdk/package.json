@@ -1,0 +1,16 @@
+{
+  "name": "@flagops/sdk",
+  "version": "1.0.0",
+  "description": "High-throughput, ultra-low latency feature flag evaluation SDK with live SSE streaming for FlagOps",
+  "main": "index.ts",
+  "types": "index.ts",
+  "license": "MIT",
+  "keywords": [
+    "feature-flags",
+    "feature-toggles",
+    "evaluation-engine",
+    "murmurhash3",
+    "sse",
+    "flagops"
+  ]
+}

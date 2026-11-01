@@ -1,0 +1,87 @@
+// PostgreSQL Schema for FlagOps
+// Use with: npx prisma db push --schema=prisma/schema.postgresql.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  environments Environment[]
+  flags        FeatureFlag[]
+
+  @@map("projects")
+}
+
+model Environment {
+  id             String          @id @default(uuid())
+  projectId      String
+  name           String
+  apiKey         String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  targetingRules TargetingRule[]
+
+  @@map("environments")
+}
+
+enum FlagType {
+  BOOLEAN
+  STRING
+  JSON
+  MULTIVARIATE
+}
+
+model FeatureFlag {
+  id             String          @id @default(uuid())
+  projectId      String
+  key            String
+  description    String?
+  flagType       FlagType        @default(BOOLEAN)
+  defaultValue   Json
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  targetingRules TargetingRule[]
+  auditLogs      AuditLog[]
+
+  @@unique([projectId, key])
+  @@map("feature_flags")
+}
+
+model TargetingRule {
+  id                String      @id @default(uuid())
+  flagId            String
+  environmentId     String
+  enabled           Boolean     @default(true)
+  rolloutPercentage Int         @default(100)
+  userSegments      Json        @default("[]")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  flag              FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  environment       Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([flagId, environmentId])
+  @@map("targeting_rules")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  flagId     String
+  modifiedBy String      @default("system")
+  diff       Json
+  createdAt  DateTime    @default(now())
+  flag       FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
